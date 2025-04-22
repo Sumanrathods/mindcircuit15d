@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fb-deploy
+  labels:
+    app: facebook
+    env: lab
+    version: AC-V1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: facebook
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: facebook
+        env: lab
+    spec:
+      containers:
+        - name: fbcont1
+          image: suman2326/myfirstrepo:MCapp
+          ports:
+            - containerPort: 8080
