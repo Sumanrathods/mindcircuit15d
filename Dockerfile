@@ -1,12 +1,8 @@
-FROM maven AS buildstage
-RUN mkdir /opt/mindcircuit15d
-WORKDIR /opt/mindcircuit15d
-COPY . .
-RUN mvn clean install    ## artifact -- .war 
-
-## tomcat deploy stage 
-FROM tomcat 
-WORKDIR webapps 
-COPY --from=buildstage /opt/mindcircuit15d/target/*.war .
-RUN rm -rf ROOT && mv *.war ROOT.war
+FROM amazonlinux
+LABEL maintainer="MADHU KIRAN <devopstraininghub@gmail.com>"
+RUN yum install python3 python3-pip pip -y
+RUN pip install flask
+COPY app.py /opt/app.py 
+CMD FLASK_APP=/opt/app.py flask run --host=0.0.0.0 --port=8080
 EXPOSE 8080
+
