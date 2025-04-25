@@ -24,6 +24,6 @@ spec:
     spec:
       containers:
         - name: fbcont1
-          image: suman2326/myfirstrepo:Flask
+          image: suman2326/myfirstrepo:5
           ports:
             - containerPort: 8080
