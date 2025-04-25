@@ -1,0 +1,83 @@
+pipeline {
+    agent any
+	
+	tools{
+	 maven 'maven3'
+	 }
+
+    stages {
+       
+
+	   stage('checkout') {
+            steps {
+                echo 'Cloning GIT HUB Repo'
+				git branch: 'main',url: 'https://github.com/Sumanrathods/mindcircuit15d.git'
+            }
+        }
+		
+		
+		stage('SonarQube scan') {
+                steps {
+                echo 'Scanning project'
+				sh 'ls -ltr'
+				sh ''' mvn sonar:sonar\\
+				    -Dsonar.host.url=http://184.73.49.136:9000 \\
+				    -Dsonar.login=squ_b4b1c44316909ce7f973ed9bcb5c8c0a64dc249c'''
+            }
+        }
+		
+		
+		stage('Build Artifact') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+		
+		
+		
+		stage('Build Docker Image') {
+            steps {
+                echo 'Build Docker Image'
+				sh 'docker build -t suman2326/myfirstrepo:${BUILD_NUMBER} .'
+            }
+        }
+        
+        stage('Push to Docker Image') {
+		steps {
+		script {
+		 
+		 withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+		 sh 'docker login -u suman2326 -p ${dockerhub}'
+		 }
+		 sh 'docker push suman2326/myfirstrepo:${BUILD_NUMBER}'
+		 echo 'Pushed to Docker Hub'
+		    }
+		  }
+		 }
+		 stage('Update Deployment File')
+		{
+		  environment {
+		    GIT_REPO_NAME = "mindcircuit15d"
+			GIT_USER_NAME = "Sumanrathods"
+			}
+		steps{
+		echo 'Update Deployment File'
+		withCredentials([string(credentialsId: 'githubtoken', variable: 'githubtoken')]) {
+		sh'''
+		
+		git config user.email "rathodsuman202@gmail.com"
+		git config user.name "suman"
+		
+		sed  -i "s/myfirstrepo:.*/myfirstrepo:${BUILD_NUMBER}/g" deployement/deployment.yaml
+		
+		git add .
+		
+		git commit -m "Update deployment image to new version ${BUILD_NUMBER}"
+		
+		git push https://${githubtoken}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+		'''
+		}
+		}
+		}
+    }
+}
